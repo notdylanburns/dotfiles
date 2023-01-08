@@ -1,0 +1,10 @@
+#!/bin/bash
+
+lkup="$1"
+acc=$(grep -i "$lkup" "$AWS_ACCOUNT_FILE")
+num=$(echo "$acc" | wc -l)
+if [[ "$num" != '1' ]] || [[ -z "$acc" ]] ; then
+        exit 1
+else
+        echo "$acc"
+fi

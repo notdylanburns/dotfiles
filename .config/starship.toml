@@ -1,0 +1,56 @@
+# Get editor completions based on the config schema
+#"$schema" = 'https://starship.rs/config-schema.json'
+
+format="""
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$custom\
+$line_break\
+$character\
+"""
+add_newline = true
+
+[character]
+success_symbol = '[\$](bold green)'
+error_symbol = '[\$](bold red)'
+
+[username]
+show_always = true
+format = "[$user](bold yellow)"
+
+[hostname]
+ssh_only = false
+format = "[@](bold white)[$hostname](bold blue)"
+
+[directory]
+truncate_to_repo = false
+format = ' [\[](bold white)[$path](bold cyan)[\]](bold white) '
+
+[git_branch]
+format = '[$symbol$branch ](bold purple)'
+
+[aws]
+format = '([AWS:](bold white)[$profile](bold 172)) [(\($region\))](bold white) [$duration](white)'
+
+[custom.aws_profile]
+format = "[AWS:](bold white)[$output ](bold 172)"
+command = 'echo $AWS_PROFILE'
+when = """[[ -n "$AWS_PROFILE" ]]"""
+
+[custom.aws_assumed_role]
+format = '[=>](bold white)[ $output ](bold 7)'
+command = 'echo $AWS_ROLE_SESSION_NAME'
+when = """[[ -n "$AWS_PROFILE" ]] && [[ -n "$AWS_ROLE_SESSION_NAME" ]]"""
+
+[custom.aws_region]
+format = '[\($output\) ](bold green)'
+command = 'echo $AWS_DEFAULT_REGION'
+when = """[[ -n "$AWS_PROFILE" ]] && [[ -n "$AWS_DEFAULT_REGION" ]]"""
+
+[custom.token_expired]
+format = "[$output](bold red)"
+command = 'token_expiry'
+when = """[[ -n "$AWS_PROFILE" ]]"""

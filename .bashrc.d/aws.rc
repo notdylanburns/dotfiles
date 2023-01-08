@@ -1,0 +1,99 @@
+export AWS_UTILS_PATH="$HOME/.aws-utils"
+export AWS_ACCOUNT_FILE="$AWS_UTILS_PATH/.accounts"
+export AWS_SESSION_STARTED_FILE="$AWS_UTILS_PATH/.session-started"
+
+export PATH="$PATH:$AWS_UTILS_PATH/bin"
+
+clear_aws_env_creds() {
+	export AWS_ACCESS_KEY_ID=
+	export AWS_SECRET_ACCESS_KEY=
+	export AWS_ROLE_SESSION_NAME=
+	export AWS_SESSION_TOKEN=
+}
+
+select_aws_region() {
+	tfile="$(mktemp /tmp/aws_region.XXXXXXXXX)" || (echo "Failed to create output file"; exit 1)
+	regions=$(aws ec2 describe-regions --query 'Regions[].{Name:RegionName}' --region eu-west-1 --output text | sort | tr '\n' ' ')
+    dropdown_menu $tfile $regions
+    export AWS_DEFAULT_REGION=`cat $tfile`
+	echo Selected region $AWS_DEFAULT_REGION
+	rm -f $tfile
+}
+
+select_aws_profile() {
+	clear_aws_env_creds
+	tfile="$(mktemp /tmp/aws_profile.XXXXXXXXX)" || (echo "Failed to create output file"; exit 1)
+	opts=$(echo $(grep -Po "(?<=\[).*(?=\])" ~/.aws/credentials) | tr ' ' '\n' | sort | tr '\n' ' ')
+	dropdown_menu $tfile $opts
+	export AWS_PROFILE=$(cat $tfile)
+	echo Switched to $AWS_PROFILE
+	rm -f $tfile
+	if [[ -z "$AWS_DEFAULT_REGION" ]] ; then
+		select_aws_region
+	fi
+}
+
+clear_aws_profile() {
+	export AWS_PROFILE=
+	export AWS_DEFAULT_REGION=
+	clear_aws_env_creds
+}
+
+assume_role() {
+	role_arn="$1"
+	session_name="$2"
+	if [[ -z "$role_arn" ]] || [[ -z "$session_name" ]] ; then
+		echo "Usage: $0 <role_arn> <session_name>"
+		return 1
+	fi
+
+	credentials=$(aws sts assume-role --no-cli-pager --role-arn "$role_arn" --role-session-name "$session_name" --duration-seconds 3600)
+	error_code="$?"
+
+	if [[ "$error_code" != '0' ]] ; then
+		echo "Failed to assume role"
+		return 1
+	fi
+
+	export AWS_ACCESS_KEY_ID=$(echo "$credentials" | jq -r '.Credentials.AccessKeyId')
+	export AWS_SECRET_ACCESS_KEY=$(echo "$credentials" | jq -r '.Credentials.SecretAccessKey')
+	export AWS_SESSION_TOKEN=$(echo "$credentials" | jq -r '.Credentials.SessionToken')
+	export AWS_ROLE_SESSION_NAME="$session_name"
+}
+
+org_assume_role() {
+	lkup="$1"
+
+	record=$(resolve_account "$lkup")
+	error_code="$?"
+
+	if [[ -z "$record" ]] || [[ "$error_code" != '0' ]] ; then
+		echo "Unable to resolve account by: $lkup"
+		if [[ "$lkup" =~ [0-9]{12} ]] ; then
+			account_id="$lkup"
+			session_name="$account_id"
+		else
+			exit 1
+		fi
+	else
+		account_id=$(echo "$record" | cut -d: -f2)
+		session_name=$(create_session_name "$record")
+	fi
+
+	clear_aws_env_creds
+	assume_role "arn:aws:iam::${account_id}:role/OrganizationAccountAccessRole" "$session_name"
+
+}
+
+start_port_forwarding_session() {
+	target="$1"
+	port="$2"
+	if [[ -z "$target" ]] || [[ -z "$port" ]] ; then
+		echo "Usage: $0 <target-id> <port>"
+		return 1
+	fi
+	aws ssm start-session \
+		--target "$target" \
+		--document-name AWS-StartPortForwardingSession \
+		--parameters "localPortNumber=0,portNumber=$port"
+}

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+lkup="$1"
+
+ent=$(resolve_account "$lkup")
+
+if [[ -z "$ent" ]] ; then
+	exit 1
+fi
+
+echo "Name:  $(echo $ent | cut -d: -f1)"
+echo "AccId: $(echo $ent | cut -d: -f2)"
+echo "Env:   $(echo $ent | cut -d: -f3)"

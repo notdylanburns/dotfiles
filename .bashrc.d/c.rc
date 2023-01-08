@@ -1,0 +1,9 @@
+new_header() {
+	if [[ -z "$1" ]] ; then
+		echo "Usage: new_header <header_name>"
+		return 1
+	fi
+
+	echo -ne "#ifndef _${1^^}_H_GUARD_\n#define _${1^^}_H_GUARD_\n\n\n\n#endif" > "$1.h"
+	echo -e "#include \"$1.h\"\n" > "$1.c"
+}

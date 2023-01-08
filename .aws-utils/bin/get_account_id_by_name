@@ -1,0 +1,9 @@
+#!/bin/bash
+
+account=$(get_account_by_name "$1")
+status="$?"
+if [[ -z "$account" ]] || [[ "$status" != "0" ]] ; then
+        exit 1
+fi
+
+echo $(echo "$account" | cut -d: -f2)

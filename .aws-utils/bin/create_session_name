@@ -1,0 +1,30 @@
+#!/bin/bash
+
+record="$1"
+if [[ -z "$record" ]] ; then
+	exit 1
+fi
+
+account_name=$(echo "$record" | cut -d: -f1)
+account_id=$(echo "$record" | cut -d: -f2)
+account_env=$(echo "$record" | cut -d: -f3)
+
+if [[ -z "$account_id" ]] ; then
+	if [[ -n "$account_name" ]] ; then
+		session_name="$account_name"
+	else
+		exit 1
+	fi
+elif [[ -n "$account_name" ]] ; then
+	session_name="${account_id}.${account_name}"
+else
+	session_name="$account_id"
+fi
+
+if [[ -n "$account_env" ]] ; then
+	session_name="${session_name}@${account_env}"
+fi
+
+echo "$session_name"
+
+

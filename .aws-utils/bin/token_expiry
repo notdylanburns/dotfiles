@@ -1,0 +1,19 @@
+#!/bin/bash
+
+duration="$1"
+if [[ -z "$duration" ]] ; then
+    duration='3600'
+fi
+
+session_start="$(cat $AWS_SESSION_STARTED_FILE)"
+
+token_expiry="$((session_start + duration))"
+
+now="$(date '+%s')"
+rem="$((token_expiry - now))"
+
+if [[ "$rem" -le '0' ]] ; then
+    echo 'EXP'
+else
+    echo "$((rem / 60))m"
+fi

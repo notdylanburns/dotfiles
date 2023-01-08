@@ -1,0 +1,15 @@
+#!/bin/bash
+
+account_id="$1"
+if [[ -z "$account_id" ]] ; then
+	exit 1
+fi
+
+account=$(grep -P '(?<=:)'"$account_id"'(?=:)' "$AWS_ACCOUNT_FILE")
+num=$(echo "$account" | wc -l)
+
+if [[ -z "$account" ]] || [[ "$num" != "1" ]] ; then
+	exit 1
+fi
+
+echo "$account"

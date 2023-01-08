@@ -1,0 +1,32 @@
+#!/bin/bash
+
+account_id="$1"
+if [[ ! "$account_id" =~ ^[0-9]{12}$ ]] ; then
+	echo 'Invalid account id'
+	exit 1
+fi
+
+account_name="$2"
+account_env="$3"
+
+account_record=$(get_account_by_id $account_id)
+status="$?"
+if [[ "$status" == '0'  ]] ; then
+	echo "Account already registered: $account_record"
+	exit 0
+fi
+
+if [[ -z "$account_name" ]] ; then
+	read -p 'Account Name: ' account_name
+fi
+
+if [[ -z "$account_env" ]] || [[ ! "$account_env" =~ Sandbox|Develop|Staging|Production ]] ; then
+	read -p 'Account Env: ' account_env
+fi
+
+if [[ ! "$account_env" =~ Sandbox|Develop|Staging|Production ]] ; then
+	account_env=''
+fi
+
+echo "${account_name}:${account_id}:${account_env}" >> $AWS_ACCOUNT_FILE
+echo "Registered account ${account_id}"
