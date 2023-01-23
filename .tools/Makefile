@@ -13,8 +13,8 @@ all: dirs dropdown_menu
 #dirs
 
 .PHONY: dirs
-dirs: $(BIN_DIR)
-	mkdir -p $^
+dirs:
+	mkdir -p $(BIN_DIR)
 
 
 # dropdown_menu
@@ -23,4 +23,4 @@ dirs: $(BIN_DIR)
 dropdown_menu: $(BIN_DIR)/dropdown_menu
 
 $(BIN_DIR)/dropdown_menu: $(SRC_DIR)/dropdown_menu.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -lncurses -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lncurses
